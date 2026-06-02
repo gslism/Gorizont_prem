@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Настройки системы{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-cash-coin"></i> Бонусные рубли</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="bonusForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="bonus">
+                    <div class="mb-3">
+                        <label class="form-label">Текущая сумма бонусных рублей на месяц</label>
+                        <div class="alert alert-info">
+                            <strong style="font-size: 1.5rem;">{{ settings.monthly_bonus_amount }} ₽</strong>
+                        </div>
+                        <label class="form-label">Новая сумма бонусных рублей на месяц</label>
+                        <input type="number" 
+                               name="monthly_bonus_amount" 
+                               class="form-control" 
+                               value="{{ settings.monthly_bonus_amount }}" 
+                               step="0.01" 
+                               min="0" 
+                               required>
+                        <small class="form-text text-muted">Эта сумма будет начисляться каждому сотруднику в начале месяца</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Изменить сумму бонусных рублей</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-image"></i> Логотип компании</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="logoForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="logo">
+                    <div class="mb-3">
+                        <label class="form-label">Текущий логотип</label>
+                        {% if settings.company_logo %}
+                        <div class="mb-2">
+                            <img src="{{ settings.company_logo.url }}" height="64" class="mb-2">
+                            <br><small class="text-muted">Текущий логотип</small>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            Логотип не установлен
+                        </div>
+                        {% endif %}
+                        <label class="form-label">Загрузить новый логотип</label>
+                        <input type="file" 
+                               name="company_logo" 
+                               class="form-control" 
+                               accept="image/png,image/jpeg,image/jpg">
+                        <small class="form-text text-muted">Загрузите файл с логотипом компании (PNG, JPG, JPEG). Будет отображаться возле логотипа приложения</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Изменить логотип</button>
+                </form>
+                {% if settings.company_logo %}
+                <form method="post" class="mt-3" onsubmit="return confirm('Удалить логотип компании из настроек? Файл будет удалён с сервера.');">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="delete_logo">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-trash"></i> Удалить логотип
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-building"></i> Отделы</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="add_department">
+                    <div class="input-group">
+                        <input type="text" name="department_name" class="form-control" placeholder="Название нового отдела" maxlength="100" required>
+                        <button type="submit" class="btn btn-primary">Добавить отдел</button>
+                    </div>
+                </form>
+                <p class="text-muted small">Удаление отдела сбросит связь у сотрудников; связанные должности будут удалены.</p>
+                <ul class="list-group">
+                    {% for d in departments_admin %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>{{ d.name }}</span>
+                        <form method="post" class="d-inline" onsubmit="return confirm('Удалить отдел «{{ d.name }}»?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="delete_department">
+                            <input type="hidden" name="department_id" value="{{ d.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                        </form>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">Отделов пока нет</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-briefcase"></i> Должности</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" class="mb-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="add_position">
+                    <div class="mb-2">
+                        <label class="form-label">Отдел</label>
+                        <select name="position_department_id" class="form-select">
+                            <option value="">— без привязки к отделу —</option>
+                            {% for d in departments_admin %}
+                            <option value="{{ d.id }}">{{ d.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" name="position_name" class="form-control" placeholder="Название должности" maxlength="100" required>
+                        <button type="submit" class="btn btn-primary">Добавить должность</button>
+                    </div>
+                </form>
+                <ul class="list-group">
+                    {% for p in positions_admin %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>
+                            {{ p.name }}
+                            {% if p.department %}
+                            <small class="text-muted">({{ p.department.name }})</small>
+                            {% else %}
+                            <small class="text-muted">(без отдела)</small>
+                            {% endif %}
+                        </span>
+                        <form method="post" class="d-inline" onsubmit="return confirm('Удалить должность «{{ p.name }}»?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="delete_position">
+                            <input type="hidden" name="position_id" value="{{ p.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                        </form>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">Должностей пока нет</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

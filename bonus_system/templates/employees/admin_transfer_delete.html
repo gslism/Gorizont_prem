@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Удаление перевода{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4><i class="bi bi-exclamation-triangle"></i> Подтверждение удаления</h4>
+    </div>
+    <div class="card-body">
+        <p>Вы уверены, что хотите удалить этот перевод?</p>
+        <div class="alert alert-warning">
+            <strong>Внимание!</strong> При удалении перевода:
+            <ul>
+                <li>Средства будут возвращены отправителю: {{ transfer.get_from_name }}{% if not transfer.from_employee_id %} (учётная запись удалена){% endif %}</li>
+                <li>Сумма будет вычтена у получателя: {{ transfer.get_to_name }}{% if not transfer.to_employee_id %} (учётная запись удалена){% endif %}</li>
+                <li>Оба пользователя получат уведомление об отмене перевода</li>
+            </ul>
+        </div>
+        <div class="card mb-3">
+            <div class="card-body">
+                <p><strong>От кого:</strong> {{ transfer.get_from_name }}</p>
+                <p><strong>Кому:</strong> {{ transfer.get_to_name }}</p>
+                <p><strong>Сумма:</strong> {{ transfer.amount }} ₽</p>
+                <p><strong>Причина:</strong> {% if transfer.reason %}{{ transfer.get_reason_display }}{% else %}-{% endif %}</p>
+                <p><strong>Объяснение:</strong> {% if transfer.explanation %}{{ transfer.explanation }}{% else %}{{ transfer.review|default:"-" }}{% endif %}</p>
+                <p><strong>Дата:</strong> {{ transfer.created_at|date:"d.m.Y H:i" }}</p>
+            </div>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="cancellation_reason" class="form-label"><strong>Причина отмены перевода</strong></label>
+                <textarea
+                    id="cancellation_reason"
+                    name="cancellation_reason"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Укажите причину отмены, которую увидит отправитель"
+                    required
+                ></textarea>
+            </div>
+            <button type="submit" class="btn btn-danger">Да, удалить</button>
+            <a href="{% url 'admin_transfers' %}" class="btn btn-secondary">Отмена</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

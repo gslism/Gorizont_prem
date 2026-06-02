@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Экспорт реестра{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h4><i class="bi bi-file-earmark-arrow-down"></i> Экспорт реестра премий</h4>
+    </div>
+    <div class="card-body">
+        <form method="get">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="periodType" class="form-label">Период</label>
+                    <select name="period" class="form-select" id="periodType" onchange="updatePeriodOptions()">
+                        <option value="month" {% if period_type == 'month' %}selected{% endif %}>Месяц</option>
+                        <option value="quarter" {% if period_type == 'quarter' %}selected{% endif %}>Квартал</option>
+                        <option value="year" {% if period_type == 'year' %}selected{% endif %}>Год</option>
+                    </select>
+                </div>
+                <div class="col-md-8">
+                    <label for="periodValue" class="form-label">Значение периода</label>
+                    <select name="period_value" class="form-select" id="periodValue">
+                        {% if period_type == 'month' %}
+                            {% for month in months %}
+                            <option value="{{ month.value }}" {% if period_value == month.value %}selected{% endif %}>{{ month.label }}</option>
+                            {% endfor %}
+                        {% elif period_type == 'quarter' %}
+                            {% for quarter in quarters %}
+                            <option value="{{ quarter.value }}" {% if period_value == quarter.value %}selected{% endif %}>{{ quarter.label }}</option>
+                            {% endfor %}
+                        {% else %}
+                            {% for year in years %}
+                            <option value="{{ year.value }}" {% if period_value == year.value %}selected{% endif %}>{{ year.label }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="employeeMode" class="form-label">Сотрудники</label>
+                    <select name="employee_mode" id="employeeMode" class="form-select" onchange="toggleEmployees()">
+                        <option value="all" {% if employee_mode == 'all' %}selected{% endif %}>Все сотрудники</option>
+                        <option value="selected" {% if employee_mode == 'selected' %}selected{% endif %}>Определенные сотрудники</option>
+                    </select>
+                </div>
+                <div class="col-md-8" id="employeesWrapper">
+                    <label for="employeesSelect" class="form-label">Выбор сотрудников</label>
+                    <select name="employees" id="employeesSelect" class="form-select" multiple size="8">
+                        {% for employee in employees %}
+                        <option value="{{ employee.id }}" {% if employee.id|stringformat:"s" in selected_employee_ids %}selected{% endif %}>
+                            {{ employee.get_full_name }}{% if employee.department %} ({{ employee.department.name }}){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Удерживайте Ctrl (Cmd), чтобы выбрать несколько сотрудников.</div>
+                </div>
+            </div>
+
+            <input type="hidden" name="format" id="formatField" value="excel">
+            <div class="mt-4 d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-outline-primary">Применить</button>
+                <button type="submit" name="download" value="1" class="btn btn-success" onclick="setFormat('excel')">
+                    <i class="bi bi-file-earmark-excel"></i> Скачать Excel
+                </button>
+                <button type="submit" name="download" value="1" class="btn btn-danger" onclick="setFormat('pdf')">
+                    <i class="bi bi-file-earmark-pdf"></i> Скачать PDF
+                </button>
+            </div>
+        </form>
+
+        <div class="alert alert-info mt-4 mb-0">
+            <strong>Текущий период:</strong> {{ period_label }}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updatePeriodOptions() {
+        const periodType = document.getElementById('periodType').value;
+        const periodValue = document.getElementById('periodValue');
+        if (periodType === 'month') {
+            periodValue.innerHTML = `
+                {% for month in months %}
+                <option value="{{ month.value }}">{{ month.label }}</option>
+                {% endfor %}
+            `;
+        } else if (periodType === 'quarter') {
+            periodValue.innerHTML = `
+                {% for quarter in quarters %}
+                <option value="{{ quarter.value }}">{{ quarter.label }}</option>
+                {% endfor %}
+            `;
+        } else {
+            periodValue.innerHTML = `
+                {% for year in years %}
+                <option value="{{ year.value }}">{{ year.label }}</option>
+                {% endfor %}
+            `;
+        }
+    }
+
+    function toggleEmployees() {
+        const mode = document.getElementById('employeeMode').value;
+        const wrapper = document.getElementById('employeesWrapper');
+        wrapper.style.display = mode === 'selected' ? '' : 'none';
+    }
+
+    function setFormat(format) {
+        document.getElementById('formatField').value = format;
+    }
+
+    toggleEmployees();
+</script>
+{% endblock %}
