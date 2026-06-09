@@ -6,17 +6,12 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
-      - sqlite_data:/app/db
-      - media_data:/app/media
       - static_data:/app/staticfiles
     environment:
       DJANGO_SETTINGS_MODULE: bonus_system.settings
-      SQLITE_PATH: /app/db/db.sqlite3
       DEBUG: "True"
       ALLOWED_HOSTS: "*"
     command: python manage.py runserver 0.0.0.0:8000
 
 volumes:
-  sqlite_data:
-  media_data:
   static_data:
